@@ -1,0 +1,367 @@
+openapi: 3.1.0
+info:
+  title: Mosify Reward System API
+  version: 1.0.0
+servers:
+  - url: '/'
+paths:
+  /users:
+    get:
+      summary: Get all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+    post:
+      summary: Create a user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /categories:
+    get:
+      summary: Get all categories
+      operationId: getAllCategories
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+    post:
+      summary: Create a category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks:
+    get:
+      summary: Get all tasks
+      operationId: getAllTasks
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+    post:
+      summary: Create a task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+  /tasks/{id}:
+    get:
+      summary: Get task by ID
+      operationId: getTaskById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks/{id}/execute:
+    post:
+      summary: Execute task for a user
+      operationId: executeTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task executed successfully and transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Business validation error (insufficient balance or already completed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /transactions:
+    get:
+      summary: Get transaction logs (audit)
+      operationId: getAllTransactions
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponse'
+components:
+  schemas:
+    UserRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Oscar"
+        pointsBalance:
+          type: integer
+          example: 100
+    UserResponse:
+      type: object
+      required:
+        - id
+        - name
+        - pointsBalance
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        pointsBalance:
+          type: integer
+    CategoryRequest:
+      type: object
+      required:
+        - userId
+        - name
+      properties:
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Studies"
+        description:
+          type: string
+          example: "Academic tasks and goals"
+    CategoryResponse:
+      type: object
+      required:
+        - id
+        - userId
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+    TaskRequest:
+      type: object
+      required:
+        - title
+        - categoryId
+        - type
+        - pointsValue
+      properties:
+        title:
+          type: string
+          example: "Study math for 1 hour"
+        categoryId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [SINGLE_USE, RECURRENT]
+          example: "RECURRENT"
+        frequency:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+          nullable: true
+          example: "DAILY"
+        pointsValue:
+          type: integer
+          example: 50
+        active:
+          type: boolean
+          example: true
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - title
+        - categoryId
+        - type
+        - pointsValue
+        - active
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [SINGLE_USE, RECURRENT]
+        frequency:
+          type: string
+          enum: [DAILY, WEEKLY, MONTHLY]
+          nullable: true
+        pointsValue:
+          type: integer
+        active:
+          type: boolean
+    TransactionResponse:
+      type: object
+      required:
+        - id
+        - userId
+        - pointsAffected
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+          nullable: true
+        pointsAffected:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INSUFFICIENT_BALANCE"
+        message:
+          type: string
+          example: "The user has insufficient points balance."
