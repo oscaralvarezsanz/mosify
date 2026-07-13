@@ -1,26 +1,33 @@
 package com.mosify.application.service;
 
 import com.mosify.application.port.in.task.TaskCreatePort;
+import com.mosify.application.port.in.task.TaskDeletePort;
 import com.mosify.application.port.in.task.TaskGetAllPort;
 import com.mosify.application.port.in.task.TaskGetByIdPort;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
+import com.mosify.application.port.out.transaction.TransactionRepository;
 import com.mosify.domain.exception.ErrorCode;
 import com.mosify.domain.exception.MosifyException;
 import com.mosify.domain.model.Task;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllPort {
+public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllPort, TaskDeletePort {
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
+    private final TransactionRepository transactionRepository;
 
-    public TaskService(TaskRepository taskRepository, CategoryRepository categoryRepository) {
+    public TaskService(TaskRepository taskRepository, 
+                       CategoryRepository categoryRepository, 
+                       TransactionRepository transactionRepository) {
         this.taskRepository = taskRepository;
         this.categoryRepository = categoryRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Override
@@ -46,5 +53,19 @@ public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllP
     @Override
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void deleteTask(UUID id) {
+        // Verify task exists
+        taskRepository.findById(id)
+                .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Task not found with id: " + id));
+
+        // Set taskId to null in transactions
+        transactionRepository.setTaskIdToNull(id);
+
+        // Delete task
+        taskRepository.deleteById(id);
     }
 }

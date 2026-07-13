@@ -9,4 +9,6 @@ public interface CategoryRepository {
     Category save(Category category);
     Optional<Category> findById(UUID id);
     List<Category> findAll();
+    void deleteById(UUID id);
+    void deleteAllByUserId(UUID userId);
 }

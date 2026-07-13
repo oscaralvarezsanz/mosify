@@ -4,6 +4,7 @@ import com.mosify.api.model.WebTaskRequest;
 import com.mosify.api.model.WebTaskResponse;
 import com.mosify.api.model.WebTransactionResponse;
 import com.mosify.application.port.in.task.TaskCreatePort;
+import com.mosify.application.port.in.task.TaskDeletePort;
 import com.mosify.application.port.in.task.TaskExecutePort;
 import com.mosify.application.port.in.task.TaskGetAllPort;
 import com.mosify.application.port.in.task.TaskGetByIdPort;
@@ -25,6 +26,7 @@ public class TaskController {
     private final TaskGetByIdPort taskGetByIdPort;
     private final TaskGetAllPort taskGetAllPort;
     private final TaskExecutePort taskExecutePort;
+    private final TaskDeletePort taskDeletePort;
     private final TaskWebConverter taskWebConverter;
     private final TransactionWebConverter transactionWebConverter;
 
@@ -32,12 +34,14 @@ public class TaskController {
                           TaskGetByIdPort taskGetByIdPort,
                           TaskGetAllPort taskGetAllPort,
                           TaskExecutePort taskExecutePort,
+                          TaskDeletePort taskDeletePort,
                           TaskWebConverter taskWebConverter,
                           TransactionWebConverter transactionWebConverter) {
         this.taskCreatePort = taskCreatePort;
         this.taskGetByIdPort = taskGetByIdPort;
         this.taskGetAllPort = taskGetAllPort;
         this.taskExecutePort = taskExecutePort;
+        this.taskDeletePort = taskDeletePort;
         this.taskWebConverter = taskWebConverter;
         this.transactionWebConverter = transactionWebConverter;
     }
@@ -67,5 +71,11 @@ public class TaskController {
     public ResponseEntity<WebTransactionResponse> executeTask(@PathVariable UUID id, @RequestParam UUID userId) {
         Transaction tx = taskExecutePort.executeTask(id, userId);
         return ResponseEntity.ok(transactionWebConverter.toWebResponse(tx));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
+        taskDeletePort.deleteTask(id);
+        return ResponseEntity.noContent().build();
     }
 }

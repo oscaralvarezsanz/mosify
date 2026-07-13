@@ -38,4 +38,19 @@ public class TaskPersistenceAdapter implements TaskRepository {
                 .map(entityConverter::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAllByCategoryId(UUID categoryId) {
+        jpaRepository.deleteAllByCategoryId(categoryId);
+    }
+
+    @Override
+    public void deleteAllByCategoryIdIn(List<UUID> categoryIds) {
+        jpaRepository.deleteAllByCategoryIdIn(categoryIds);
+    }
 }

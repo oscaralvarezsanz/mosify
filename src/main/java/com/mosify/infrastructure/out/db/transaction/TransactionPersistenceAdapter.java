@@ -39,4 +39,14 @@ public class TransactionPersistenceAdapter implements TransactionRepository {
                 .map(entityConverter::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        jpaRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public void setTaskIdToNull(UUID taskId) {
+        jpaRepository.setTaskIdToNull(taskId);
+    }
 }

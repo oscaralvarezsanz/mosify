@@ -9,4 +9,5 @@ public interface UserRepository {
     User save(User user);
     Optional<User> findById(UUID id);
     List<User> findAll();
+    void deleteById(UUID id);
 }

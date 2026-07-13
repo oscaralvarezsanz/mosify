@@ -38,4 +38,9 @@ public class UserPersistenceAdapter implements UserRepository {
                 .map(entityConverter::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
 }

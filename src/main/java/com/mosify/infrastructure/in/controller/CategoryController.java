@@ -3,6 +3,7 @@ package com.mosify.infrastructure.in.controller;
 import com.mosify.api.model.WebCategoryRequest;
 import com.mosify.api.model.WebCategoryResponse;
 import com.mosify.application.port.in.category.CategoryCreatePort;
+import com.mosify.application.port.in.category.CategoryDeletePort;
 import com.mosify.application.port.in.category.CategoryGetAllPort;
 import com.mosify.application.port.in.category.CategoryGetByIdPort;
 import com.mosify.domain.model.Category;
@@ -20,15 +21,18 @@ public class CategoryController {
     private final CategoryCreatePort categoryCreatePort;
     private final CategoryGetByIdPort categoryGetByIdPort;
     private final CategoryGetAllPort categoryGetAllPort;
+    private final CategoryDeletePort categoryDeletePort;
     private final CategoryWebConverter webConverter;
 
     public CategoryController(CategoryCreatePort categoryCreatePort,
                               CategoryGetByIdPort categoryGetByIdPort,
                               CategoryGetAllPort categoryGetAllPort,
+                              CategoryDeletePort categoryDeletePort,
                               CategoryWebConverter webConverter) {
         this.categoryCreatePort = categoryCreatePort;
         this.categoryGetByIdPort = categoryGetByIdPort;
         this.categoryGetAllPort = categoryGetAllPort;
+        this.categoryDeletePort = categoryDeletePort;
         this.webConverter = webConverter;
     }
 
@@ -51,5 +55,11 @@ public class CategoryController {
                 .map(webConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
+        categoryDeletePort.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

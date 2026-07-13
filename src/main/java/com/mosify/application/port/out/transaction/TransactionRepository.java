@@ -8,4 +8,6 @@ public interface TransactionRepository {
     Transaction save(Transaction transaction);
     List<Transaction> findAll();
     List<Transaction> findAllByTaskIdAndUserId(UUID taskId, UUID userId);
+    void deleteAllByUserId(UUID userId);
+    void setTaskIdToNull(UUID taskId);
 }
