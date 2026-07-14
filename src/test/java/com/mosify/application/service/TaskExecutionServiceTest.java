@@ -22,30 +22,57 @@ import static org.mockito.Mockito.*;
 
 public class TaskExecutionServiceTest {
 
-    private TaskRepository taskRepository;
-    private UserRepository userRepository;
-    private CategoryRepository categoryRepository;
-    private TransactionRepository transactionRepository;
-    private BoardUserRepository boardUserRepository;
-    private TaskExecutionService service;
+    private final TaskRepository taskRepository = mock(TaskRepository.class);
+    private final UserRepository userRepository = mock(UserRepository.class);
+    private final CategoryRepository categoryRepository = mock(CategoryRepository.class);
+    private final TransactionRepository transactionRepository = mock(TransactionRepository.class);
+    private final BoardUserRepository boardUserRepository = mock(BoardUserRepository.class);
+    private final TaskExecutionService service = new TaskExecutionService(taskRepository, userRepository, categoryRepository, transactionRepository, boardUserRepository);
+
+    private UUID taskId;
+    private UUID userId;
+    private UUID categoryId;
+    private UUID boardId;
+
+    private User user;
+    private Category category;
+    private BoardUser boardUser;
 
     @BeforeEach
     public void setUp() {
-        taskRepository = mock(TaskRepository.class);
-        userRepository = mock(UserRepository.class);
-        categoryRepository = mock(CategoryRepository.class);
-        transactionRepository = mock(TransactionRepository.class);
-        boardUserRepository = mock(BoardUserRepository.class);
-        service = new TaskExecutionService(taskRepository, userRepository, categoryRepository, transactionRepository, boardUserRepository);
+
+        taskId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        categoryId = UUID.randomUUID();
+        boardId = UUID.randomUUID();
+
+        user = User.builder()
+                .id(userId)
+                .name("Oscar")
+                .build();
+
+        category = Category.builder()
+                .id(categoryId)
+                .userId(userId)
+                .name("Studies")
+                .boardId(boardId)
+                .build();
+
+        boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId, userId)).thenReturn(Optional.of(boardUser));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
     public void shouldExecuteRewardTaskSuccessfully() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Math Exercises")
@@ -55,29 +82,7 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Studies")
-                .boardId(boardId)
-                .build();
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         Transaction tx = service.executeTask(taskId, userId);
 
@@ -94,11 +99,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldExecuteCostTaskSuccessfullyWhenBalanceIsEnough() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Buy skin in Fortnite")
@@ -108,30 +108,7 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Entertainment")
-                .boardId(boardId)
-                .build();
-
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         Transaction tx = service.executeTask(taskId, userId);
 
@@ -146,12 +123,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenExecutingCostTaskWithInsufficientBalance() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Buy skin in Fortnite")
@@ -161,29 +132,7 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Entertainment")
-                .boardId(boardId)
-                .build();
-
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         assertThatThrownBy(() -> service.executeTask(taskId, userId))
                 .isInstanceOf(MosifyException.class)
@@ -198,11 +147,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldDeactivateSingleUseTaskAfterExecution() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Single assignment reward")
@@ -212,30 +156,7 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Studies")
-                .boardId(boardId)
-                .build();
-
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         service.executeTask(taskId, userId);
 
@@ -247,9 +168,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenExecutingInactiveTask() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Math Exercises")
@@ -269,11 +187,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenExecutingRecurrentTaskTwiceInSamePeriod() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Daily Math Exercises")
@@ -284,28 +197,8 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Studies")
-                .boardId(boardId)
-                .build();
-
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        
         Transaction transaction = Transaction.builder()
                 .id(UUID.randomUUID())
                 .taskId(taskId)
@@ -314,7 +207,6 @@ public class TaskExecutionServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
         when(transactionRepository.findAllByTaskIdAndUserId(taskId, userId)).thenReturn(List.of(transaction));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         assertThatThrownBy(() -> service.executeTask(taskId, userId))
                 .isInstanceOf(MosifyException.class)
@@ -327,11 +219,6 @@ public class TaskExecutionServiceTest {
 
     @Test
     public void shouldAllowExecutingRecurrentTaskMultipleTimesIfNoFrequency() {
-        UUID taskId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-
         Task task = Task.builder()
                 .id(taskId)
                 .title("Free Play Exercises")
@@ -342,31 +229,7 @@ public class TaskExecutionServiceTest {
                 .active(true)
                 .build();
 
-        User user = User.builder()
-                .id(userId)
-                .name("Oscar")
-                .build();
-
-        Category category = Category.builder()
-                .id(categoryId)
-                .userId(userId)
-                .name("Studies")
-                .boardId(boardId)
-                .build();
-
-        BoardUser boardUser = BoardUser.builder()
-                .boardId(boardId)
-                .userId(userId)
-                .alias("Alias")
-                .pointsBalance(100)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
-
 
         // Execute first time
         Transaction tx1 = service.executeTask(taskId, userId);
