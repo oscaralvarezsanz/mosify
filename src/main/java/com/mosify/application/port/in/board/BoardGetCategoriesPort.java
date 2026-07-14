@@ -5,5 +5,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BoardGetCategoriesPort {
-    List<Category> getBoardCategories(UUID boardId);
+    List<Category> getBoardCategories(UUID boardId, UUID userId);
 }

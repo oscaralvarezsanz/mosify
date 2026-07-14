@@ -8,8 +8,10 @@ import com.mosify.application.port.in.category.CategoryGetAllPort;
 import com.mosify.application.port.in.category.CategoryGetByIdPort;
 import com.mosify.domain.model.Category;
 import com.mosify.infrastructure.in.mapper.CategoryWebConverter;
+import com.mosify.infrastructure.security.SecurityUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -37,29 +39,52 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<WebCategoryResponse> createCategory(@RequestBody WebCategoryRequest request) {
+    public ResponseEntity<WebCategoryResponse> createCategory(
+            @RequestBody WebCategoryRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
         Category category = webConverter.toDomain(request);
-        Category created = categoryCreatePort.createCategory(category);
+        Category created = categoryCreatePort.createCategory(category, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(webConverter.toWebResponse(created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WebCategoryResponse> getCategoryById(@PathVariable UUID id) {
-        Category category = categoryGetByIdPort.getCategoryById(id);
+    public ResponseEntity<WebCategoryResponse> getCategoryById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        Category category = categoryGetByIdPort.getCategoryById(id, userId);
         return ResponseEntity.ok(webConverter.toWebResponse(category));
     }
 
     @GetMapping
-    public ResponseEntity<List<WebCategoryResponse>> getAllCategories() {
-        List<WebCategoryResponse> responses = categoryGetAllPort.getAllCategories().stream()
+    public ResponseEntity<List<WebCategoryResponse>> getAllCategories(
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebCategoryResponse> responses = categoryGetAllPort.getAllCategories(userId).stream()
                 .map(webConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
-        categoryDeletePort.deleteCategory(id);
+    public ResponseEntity<Void> deleteCategory(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        categoryDeletePort.deleteCategory(id, userId);
         return ResponseEntity.noContent().build();
     }
 }

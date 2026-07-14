@@ -84,7 +84,7 @@ public class TaskExecutionServiceTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        Transaction tx = service.executeTask(taskId, userId);
+        Transaction tx = service.executeTask(taskId, userId, userId);
 
         assertThat(tx).isNotNull();
         assertThat(tx.getPointsAffected()).isEqualTo(50);
@@ -110,7 +110,7 @@ public class TaskExecutionServiceTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        Transaction tx = service.executeTask(taskId, userId);
+        Transaction tx = service.executeTask(taskId, userId, userId);
 
         assertThat(tx).isNotNull();
         assertThat(tx.getPointsAffected()).isEqualTo(-80);
@@ -134,7 +134,7 @@ public class TaskExecutionServiceTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        assertThatThrownBy(() -> service.executeTask(taskId, userId))
+        assertThatThrownBy(() -> service.executeTask(taskId, userId, userId))
                 .isInstanceOf(MosifyException.class)
                 .hasMessageContaining("User has insufficient points balance")
                 .extracting(ex -> ((MosifyException) ex).getErrorCode())
@@ -158,7 +158,7 @@ public class TaskExecutionServiceTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        service.executeTask(taskId, userId);
+        service.executeTask(taskId, userId, userId);
 
         // Verify task is saved as inactive
         ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
@@ -176,7 +176,7 @@ public class TaskExecutionServiceTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-        assertThatThrownBy(() -> service.executeTask(taskId, userId))
+        assertThatThrownBy(() -> service.executeTask(taskId, userId, userId))
                 .isInstanceOf(MosifyException.class)
                 .hasMessageContaining("Task is inactive")
                 .extracting(ex -> ((MosifyException) ex).getErrorCode())
@@ -208,7 +208,7 @@ public class TaskExecutionServiceTest {
                 .build();
         when(transactionRepository.findAllByTaskIdAndUserId(taskId, userId)).thenReturn(List.of(transaction));
 
-        assertThatThrownBy(() -> service.executeTask(taskId, userId))
+        assertThatThrownBy(() -> service.executeTask(taskId, userId, userId))
                 .isInstanceOf(MosifyException.class)
                 .hasMessageContaining("Task already completed in the current daily period")
                 .extracting(ex -> ((MosifyException) ex).getErrorCode())
@@ -232,11 +232,11 @@ public class TaskExecutionServiceTest {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
         // Execute first time
-        Transaction tx1 = service.executeTask(taskId, userId);
+        Transaction tx1 = service.executeTask(taskId, userId, userId);
         assertThat(tx1).isNotNull();
 
         // Execute second time immediately
-        Transaction tx2 = service.executeTask(taskId, userId);
+        Transaction tx2 = service.executeTask(taskId, userId, userId);
         assertThat(tx2).isNotNull();
 
         verify(transactionRepository, times(2)).save(any(Transaction.class));

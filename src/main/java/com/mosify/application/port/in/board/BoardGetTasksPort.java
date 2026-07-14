@@ -5,5 +5,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BoardGetTasksPort {
-    List<Task> getBoardTasks(UUID boardId);
+    List<Task> getBoardTasks(UUID boardId, UUID userId);
 }

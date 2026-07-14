@@ -12,8 +12,10 @@ import com.mosify.domain.model.Task;
 import com.mosify.domain.model.Transaction;
 import com.mosify.infrastructure.in.mapper.TaskWebConverter;
 import com.mosify.infrastructure.in.mapper.TransactionWebConverter;
+import com.mosify.infrastructure.security.SecurityUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -47,35 +49,65 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<WebTaskResponse> createTask(@RequestBody WebTaskRequest request) {
+    public ResponseEntity<WebTaskResponse> createTask(
+            @RequestBody WebTaskRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
         Task task = taskWebConverter.toDomain(request);
-        Task created = taskCreatePort.createTask(task);
+        Task created = taskCreatePort.createTask(task, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(taskWebConverter.toWebResponse(created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WebTaskResponse> getTaskById(@PathVariable UUID id) {
-        Task task = taskGetByIdPort.getTaskById(id);
+    public ResponseEntity<WebTaskResponse> getTaskById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        Task task = taskGetByIdPort.getTaskById(id, userId);
         return ResponseEntity.ok(taskWebConverter.toWebResponse(task));
     }
 
     @GetMapping
-    public ResponseEntity<List<WebTaskResponse>> getAllTasks() {
-        List<WebTaskResponse> responses = taskGetAllPort.getAllTasks().stream()
+    public ResponseEntity<List<WebTaskResponse>> getAllTasks(
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebTaskResponse> responses = taskGetAllPort.getAllTasks(userId).stream()
                 .map(taskWebConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     @PostMapping("/{id}/execute")
-    public ResponseEntity<WebTransactionResponse> executeTask(@PathVariable UUID id, @RequestParam UUID userId) {
-        Transaction tx = taskExecutePort.executeTask(id, userId);
+    public ResponseEntity<WebTransactionResponse> executeTask(
+            @PathVariable UUID id, 
+            @RequestParam UUID userId,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID callerUserId = securityUser.getUser().getId();
+        Transaction tx = taskExecutePort.executeTask(id, userId, callerUserId);
         return ResponseEntity.ok(transactionWebConverter.toWebResponse(tx));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
-        taskDeletePort.deleteTask(id);
+    public ResponseEntity<Void> deleteTask(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        taskDeletePort.deleteTask(id, userId);
         return ResponseEntity.noContent().build();
     }
 }

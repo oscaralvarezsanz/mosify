@@ -60,4 +60,11 @@ public class CategoryPersistenceAdapter implements CategoryRepository {
                 .map(entityConverter::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Category> findAllByBoardIdIn(List<UUID> boardIds) {
+        return jpaRepository.findAllByBoardIdIn(boardIds).stream()
+                .map(entityConverter::toDomain)
+                .toList();
+    }
 }

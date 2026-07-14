@@ -19,7 +19,8 @@ public class GlobalExceptionHandler {
             ErrorCode.INSUFFICIENT_BALANCE, HttpStatus.BAD_REQUEST,
             ErrorCode.TASK_ALREADY_COMPLETED, HttpStatus.BAD_REQUEST,
             ErrorCode.TASK_INACTIVE, HttpStatus.BAD_REQUEST,
-            ErrorCode.BUSINESS_VALIDATION_ERROR, HttpStatus.BAD_REQUEST
+            ErrorCode.BUSINESS_VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
+            ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN
     );
 
     @ExceptionHandler(MosifyException.class)

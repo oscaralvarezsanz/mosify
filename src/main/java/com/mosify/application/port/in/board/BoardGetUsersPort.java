@@ -5,5 +5,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BoardGetUsersPort {
-    List<BoardUser> getBoardUsers(UUID boardId);
+    List<BoardUser> getBoardUsers(UUID boardId, UUID userId);
 }

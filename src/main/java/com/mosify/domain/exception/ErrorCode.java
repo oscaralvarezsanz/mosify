@@ -5,7 +5,8 @@ public enum ErrorCode {
     INSUFFICIENT_BALANCE("Insufficient points balance"),
     TASK_ALREADY_COMPLETED("Task already completed in the current period"),
     TASK_INACTIVE("Task is inactive"),
-    BUSINESS_VALIDATION_ERROR("Business validation error");
+    BUSINESS_VALIDATION_ERROR("Business validation error"),
+    FORBIDDEN("Access denied");
 
     private final String defaultDescription;
 

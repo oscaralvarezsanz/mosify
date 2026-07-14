@@ -4,8 +4,10 @@ import com.mosify.api.model.*;
 import com.mosify.application.port.in.board.*;
 import com.mosify.domain.model.Board;
 import com.mosify.infrastructure.in.mapper.*;
+import com.mosify.infrastructure.security.SecurityUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -73,52 +75,95 @@ public class BoardController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable UUID id) {
-        boardDeletePort.deleteBoard(id);
+    public ResponseEntity<Void> deleteBoard(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        boardDeletePort.deleteBoard(id, userId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/users")
-    public ResponseEntity<List<WebBoardUserResponse>> getBoardUsers(@PathVariable UUID id) {
-        List<WebBoardUserResponse> responses = boardGetUsersPort.getBoardUsers(id).stream()
+    public ResponseEntity<List<WebBoardUserResponse>> getBoardUsers(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebBoardUserResponse> responses = boardGetUsersPort.getBoardUsers(id, userId).stream()
                 .map(boardWebConverter::toWebUserResponse)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     @PostMapping("/{id}/users/{userId}")
-    public ResponseEntity<Void> addUserToBoard(@PathVariable UUID id, 
-                                               @PathVariable UUID userId, 
-                                               @RequestParam(value = "alias", required = false) String alias) {
-        boardAddUserPort.addUserToBoard(id, userId, alias);
+    public ResponseEntity<Void> addUserToBoard(
+            @PathVariable UUID id, 
+            @PathVariable UUID userId, 
+            @RequestParam(value = "alias", required = false) String alias,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID callerUserId = securityUser.getUser().getId();
+        boardAddUserPort.addUserToBoard(id, userId, alias, callerUserId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}/users/{userId}")
-    public ResponseEntity<Void> removeUserFromBoard(@PathVariable UUID id, @PathVariable UUID userId) {
-        boardRemoveUserPort.removeUserFromBoard(id, userId);
+    public ResponseEntity<Void> removeUserFromBoard(
+            @PathVariable UUID id, 
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID callerUserId = securityUser.getUser().getId();
+        boardRemoveUserPort.removeUserFromBoard(id, userId, callerUserId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/categories")
-    public ResponseEntity<List<WebCategoryResponse>> getBoardCategories(@PathVariable UUID id) {
-        List<WebCategoryResponse> responses = boardGetCategoriesPort.getBoardCategories(id).stream()
+    public ResponseEntity<List<WebCategoryResponse>> getBoardCategories(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebCategoryResponse> responses = boardGetCategoriesPort.getBoardCategories(id, userId).stream()
                 .map(categoryWebConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<WebTaskResponse>> getBoardTasks(@PathVariable UUID id) {
-        List<WebTaskResponse> responses = boardGetTasksPort.getBoardTasks(id).stream()
+    public ResponseEntity<List<WebTaskResponse>> getBoardTasks(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebTaskResponse> responses = boardGetTasksPort.getBoardTasks(id, userId).stream()
                 .map(taskWebConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<WebTransactionResponse>> getBoardTransactions(@PathVariable UUID id) {
-        List<WebTransactionResponse> responses = boardGetTransactionsPort.getBoardTransactions(id).stream()
+    public ResponseEntity<List<WebTransactionResponse>> getBoardTransactions(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        List<WebTransactionResponse> responses = boardGetTransactionsPort.getBoardTransactions(id, userId).stream()
                 .map(transactionWebConverter::toWebResponse)
                 .toList();
         return ResponseEntity.ok(responses);

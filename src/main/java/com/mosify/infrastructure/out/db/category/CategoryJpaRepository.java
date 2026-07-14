@@ -9,4 +9,5 @@ public interface CategoryJpaRepository extends JpaRepository<CategoryEntity, UUI
     void deleteAllByUserId(UUID userId);
     void deleteAllByBoardId(UUID boardId);
     List<CategoryEntity> findAllByBoardId(UUID boardId);
+    List<CategoryEntity> findAllByBoardIdIn(List<UUID> boardIds);
 }

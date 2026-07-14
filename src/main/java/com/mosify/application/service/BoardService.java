@@ -27,7 +27,8 @@ public class BoardService implements
         BoardGetUsersPort, 
         BoardGetCategoriesPort, 
         BoardGetTasksPort, 
-        BoardGetTransactionsPort {
+        BoardGetTransactionsPort,
+        BoardGetByUserPort {
 
     private final BoardRepository boardRepository;
     private final BoardUserRepository boardUserRepository;
@@ -50,6 +51,17 @@ public class BoardService implements
         this.transactionRepository = transactionRepository;
     }
 
+    private void checkMembership(UUID boardId, UUID userId) {
+        boolean hasMembers = !boardUserRepository.findAllByBoardId(boardId).isEmpty();
+        if (!hasMembers) {
+            return;
+        }
+        boolean isMember = boardUserRepository.findByBoardIdAndUserId(boardId, userId).isPresent();
+        if (!isMember) {
+            throw new MosifyException(ErrorCode.FORBIDDEN, "Access denied. User is not a member of this board.");
+        }
+    }
+
     @Override
     @Transactional
     public Board createBoard(Board board) {
@@ -62,8 +74,20 @@ public class BoardService implements
     }
 
     @Override
+    public List<Board> getBoardsByUserId(UUID userId) {
+        List<BoardUser> memberships = boardUserRepository.findAllByUserId(userId);
+        return memberships.stream()
+                .map(m -> boardRepository.findById(m.getBoardId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+    }
+
+    @Override
     @Transactional
-    public void deleteBoard(UUID id) {
+    public void deleteBoard(UUID id, UUID userId) {
+        checkMembership(id, userId);
+
         boardRepository.findById(id)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Board not found with id: " + id));
 
@@ -80,7 +104,9 @@ public class BoardService implements
 
     @Override
     @Transactional
-    public void addUserToBoard(UUID boardId, UUID userId, String alias) {
+    public void addUserToBoard(UUID boardId, UUID userId, String alias, UUID callerUserId) {
+        checkMembership(boardId, callerUserId);
+
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Board not found with id: " + boardId));
         userRepository.findById(userId)
@@ -103,12 +129,15 @@ public class BoardService implements
 
     @Override
     @Transactional
-    public void removeUserFromBoard(UUID boardId, UUID userId) {
+    public void removeUserFromBoard(UUID boardId, UUID userId, UUID callerUserId) {
+        checkMembership(boardId, callerUserId);
         boardUserRepository.deleteByBoardIdAndUserId(boardId, userId);
     }
 
     @Override
-    public List<BoardUser> getBoardUsers(UUID boardId) {
+    public List<BoardUser> getBoardUsers(UUID boardId, UUID userId) {
+        checkMembership(boardId, userId);
+
         List<BoardUser> memberships = boardUserRepository.findAllByBoardId(boardId);
         return memberships.stream()
                 .map(m -> {
@@ -121,12 +150,15 @@ public class BoardService implements
     }
 
     @Override
-    public List<Category> getBoardCategories(UUID boardId) {
+    public List<Category> getBoardCategories(UUID boardId, UUID userId) {
+        checkMembership(boardId, userId);
         return categoryRepository.findAllByBoardId(boardId);
     }
 
     @Override
-    public List<Task> getBoardTasks(UUID boardId) {
+    public List<Task> getBoardTasks(UUID boardId, UUID userId) {
+        checkMembership(boardId, userId);
+
         List<Category> categories = categoryRepository.findAllByBoardId(boardId);
         if (categories.isEmpty()) {
             return Collections.emptyList();
@@ -136,7 +168,9 @@ public class BoardService implements
     }
 
     @Override
-    public List<Transaction> getBoardTransactions(UUID boardId) {
+    public List<Transaction> getBoardTransactions(UUID boardId, UUID userId) {
+        checkMembership(boardId, userId);
+
         List<BoardUser> memberships = boardUserRepository.findAllByBoardId(boardId);
         if (memberships.isEmpty()) {
             return Collections.emptyList();

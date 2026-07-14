@@ -38,7 +38,7 @@ public class TaskExecutionService implements TaskExecutePort {
 
     @Override
     @Transactional
-    public Transaction executeTask(UUID taskId, UUID userId) {
+    public Transaction executeTask(UUID taskId, UUID userId, UUID callerUserId) {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Task not found with id: " + taskId));
@@ -52,6 +52,10 @@ public class TaskExecutionService implements TaskExecutePort {
 
         Category category = categoryRepository.findById(task.getCategoryId())
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category not found with id: " + task.getCategoryId()));
+
+        // Check if caller is member of board
+        boardUserRepository.findByBoardIdAndUserId(category.getBoardId(), callerUserId)
+                .orElseThrow(() -> new MosifyException(ErrorCode.FORBIDDEN, "Access denied. Caller is not a member of this board."));
 
         BoardUser boardUser = boardUserRepository.findByBoardIdAndUserId(category.getBoardId(), userId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User is not a member of the board: " + category.getBoardId()));

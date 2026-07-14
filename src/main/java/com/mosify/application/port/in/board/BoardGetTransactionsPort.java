@@ -5,5 +5,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BoardGetTransactionsPort {
-    List<Transaction> getBoardTransactions(UUID boardId);
+    List<Transaction> getBoardTransactions(UUID boardId, UUID userId);
 }
