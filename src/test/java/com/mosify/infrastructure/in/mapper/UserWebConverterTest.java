@@ -16,12 +16,16 @@ public class UserWebConverterTest {
     public void shouldMapRequestToDomain() {
         WebUserRequest request = WebUserRequest.builder()
                 .name("Oscar")
+                .username("oscar")
+                .password("password")
                 .build();
 
         User domain = converter.toDomain(request);
 
         assertThat(domain).isNotNull();
         assertThat(domain.getName()).isEqualTo("Oscar");
+        assertThat(domain.getUsername()).isEqualTo("oscar");
+        assertThat(domain.getPassword()).isEqualTo("password");
     }
 
     @Test
@@ -30,6 +34,8 @@ public class UserWebConverterTest {
         User domain = User.builder()
                 .id(id)
                 .name("Oscar")
+                .username("oscar")
+                .password("password")
                 .build();
 
         WebUserResponse response = converter.toWebResponse(domain);
@@ -37,5 +43,6 @@ public class UserWebConverterTest {
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(id);
         assertThat(response.getName()).isEqualTo("Oscar");
+        assertThat(response.getUsername()).isEqualTo("oscar");
     }
 }

@@ -43,4 +43,9 @@ public class UserPersistenceAdapter implements UserRepository {
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return jpaRepository.findByUsername(username).map(entityConverter::toDomain);
+    }
 }

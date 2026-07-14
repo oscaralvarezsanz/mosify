@@ -455,26 +455,60 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TransactionResponse'
+  /auth/login:
+    post:
+      summary: Authenticate user and return JWT token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     UserRequest:
       type: object
       required:
         - name
+        - username
+        - password
       properties:
         name:
           type: string
           example: "Oscar"
+        username:
+          type: string
+          example: "oscar"
+        password:
+          type: string
+          example: "mysecurepassword"
     UserResponse:
       type: object
       required:
         - id
         - name
+        - username
       properties:
         id:
           type: string
           format: uuid
         name:
+          type: string
+        username:
           type: string
     CategoryRequest:
       type: object
@@ -651,3 +685,26 @@ components:
         userId:
           type: string
           format: uuid
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "oscar"
+        password:
+          type: string
+          example: "mysecurepassword"
+    AuthResponse:
+      type: object
+      required:
+        - accessToken
+        - user
+      properties:
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+        user:
+          $ref: '#/components/schemas/UserResponse'

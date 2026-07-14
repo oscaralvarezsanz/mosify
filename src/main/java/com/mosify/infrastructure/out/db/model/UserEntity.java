@@ -19,4 +19,10 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String name;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
 }

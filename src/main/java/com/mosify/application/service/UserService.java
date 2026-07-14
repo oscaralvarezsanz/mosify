@@ -11,12 +11,13 @@ import com.mosify.application.port.out.transaction.TransactionRepository;
 import com.mosify.application.port.out.user.UserRepository;
 import com.mosify.domain.exception.ErrorCode;
 import com.mosify.domain.exception.MosifyException;
-import com.mosify.domain.model.Category;
 import com.mosify.domain.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class UserService implements UserCreatePort, UserGetByIdPort, UserGetAllPort, UserDeletePort {
@@ -26,22 +27,31 @@ public class UserService implements UserCreatePort, UserGetByIdPort, UserGetAllP
     private final TaskRepository taskRepository;
     private final TransactionRepository transactionRepository;
     private final BoardUserRepository boardUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository,
                        CategoryRepository categoryRepository,
                        TaskRepository taskRepository,
                        TransactionRepository transactionRepository,
-                       BoardUserRepository boardUserRepository) {
+                       BoardUserRepository boardUserRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.taskRepository = taskRepository;
         this.transactionRepository = transactionRepository;
         this.boardUserRepository = boardUserRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public User createUser(User user) {
-        return userRepository.save(user);
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new MosifyException(ErrorCode.BUSINESS_VALIDATION_ERROR, "Username already exists: " + user.getUsername());
+        }
+        User securedUser = user.toBuilder()
+                .password(passwordEncoder.encode(user.getPassword()))
+                .build();
+        return userRepository.save(securedUser);
     }
 
     @Override
