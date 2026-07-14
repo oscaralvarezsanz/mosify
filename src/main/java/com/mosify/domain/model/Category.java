@@ -9,6 +9,7 @@ import java.util.UUID;
 public class Category {
     UUID id;
     UUID userId;
+    UUID boardId;
     String name;
     String description;
 }

@@ -5,6 +5,191 @@ info:
 servers:
   - url: '/'
 paths:
+  /boards:
+    get:
+      summary: Get all boards
+      operationId: getAllBoards
+      responses:
+        '200':
+          description: List of boards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardResponse'
+    post:
+      summary: Create a board
+      operationId: createBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardRequest'
+      responses:
+        '201':
+          description: Board created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+  /boards/{id}:
+    delete:
+      summary: Delete board by ID
+      operationId: deleteBoard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Board deleted successfully
+        '404':
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /boards/{id}/users:
+    get:
+      summary: Get users belonging to a board
+      operationId: getBoardUsers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of board users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardUserResponse'
+  /boards/{id}/users/{userId}:
+    post:
+      summary: Add an existing user to a board
+      operationId: addUserToBoard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: alias
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User added to board successfully
+        '404':
+          description: Board or User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Remove a user from a board
+      operationId: removeUserFromBoard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User removed from board successfully
+        '404':
+          description: Board-User membership not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /boards/{id}/categories:
+    get:
+      summary: Get categories belonging to a board
+      operationId: getBoardCategories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of board categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+  /boards/{id}/tasks:
+    get:
+      summary: Get tasks belonging to a board
+      operationId: getBoardTasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of board tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+  /boards/{id}/transactions:
+    get:
+      summary: Get transactions belonging to a board
+      operationId: getBoardTransactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of board transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponse'
   /users:
     get:
       summary: Get all users
@@ -280,30 +465,28 @@ components:
         name:
           type: string
           example: "Oscar"
-        pointsBalance:
-          type: integer
-          example: 100
     UserResponse:
       type: object
       required:
         - id
         - name
-        - pointsBalance
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
-        pointsBalance:
-          type: integer
     CategoryRequest:
       type: object
       required:
         - userId
+        - boardId
         - name
       properties:
         userId:
+          type: string
+          format: uuid
+        boardId:
           type: string
           format: uuid
         name:
@@ -317,12 +500,16 @@ components:
       required:
         - id
         - userId
+        - boardId
         - name
       properties:
         id:
           type: string
           format: uuid
         userId:
+          type: string
+          format: uuid
+        boardId:
           type: string
           format: uuid
         name:
@@ -422,3 +609,45 @@ components:
         message:
           type: string
           example: "The user has insufficient points balance."
+    BoardRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Family Board"
+    BoardResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    BoardUserResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        pointsBalance:
+          type: integer
+        alias:
+          type: string
+        userName:
+          type: string
+        boardId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid

@@ -49,4 +49,11 @@ public class TransactionPersistenceAdapter implements TransactionRepository {
     public void setTaskIdToNull(UUID taskId) {
         jpaRepository.setTaskIdToNull(taskId);
     }
+
+    @Override
+    public List<Transaction> findAllByUserIdIn(List<UUID> userIds) {
+        return jpaRepository.findAllByUserIdIn(userIds).stream()
+                .map(entityConverter::toDomain)
+                .toList();
+    }
 }

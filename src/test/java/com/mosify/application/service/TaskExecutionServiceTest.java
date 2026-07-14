@@ -1,5 +1,6 @@
 package com.mosify.application.service;
 
+import com.mosify.application.port.out.board.BoardUserRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
 import com.mosify.application.port.out.transaction.TransactionRepository;
@@ -25,6 +26,7 @@ public class TaskExecutionServiceTest {
     private UserRepository userRepository;
     private CategoryRepository categoryRepository;
     private TransactionRepository transactionRepository;
+    private BoardUserRepository boardUserRepository;
     private TaskExecutionService service;
 
     @BeforeEach
@@ -33,7 +35,8 @@ public class TaskExecutionServiceTest {
         userRepository = mock(UserRepository.class);
         categoryRepository = mock(CategoryRepository.class);
         transactionRepository = mock(TransactionRepository.class);
-        service = new TaskExecutionService(taskRepository, userRepository, categoryRepository, transactionRepository);
+        boardUserRepository = mock(BoardUserRepository.class);
+        service = new TaskExecutionService(taskRepository, userRepository, categoryRepository, transactionRepository, boardUserRepository);
     }
 
     @Test
@@ -41,6 +44,7 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
 
         Task task = Task.builder()
                 .id(taskId)
@@ -54,19 +58,26 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Studies")
+                .boardId(boardId)
+                .build();
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         Transaction tx = service.executeTask(taskId, userId);
 
@@ -76,8 +87,8 @@ public class TaskExecutionServiceTest {
         assertThat(tx.getTaskId()).isEqualTo(taskId);
 
         // Verify balance updated: 100 + 50 = 150
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
+        ArgumentCaptor<BoardUser> userCaptor = ArgumentCaptor.forClass(BoardUser.class);
+        verify(boardUserRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue().getPointsBalance()).isEqualTo(150);
     }
 
@@ -86,6 +97,7 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
 
         Task task = Task.builder()
                 .id(taskId)
@@ -99,19 +111,27 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Entertainment")
+                .boardId(boardId)
+                .build();
+
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         Transaction tx = service.executeTask(taskId, userId);
 
@@ -119,8 +139,8 @@ public class TaskExecutionServiceTest {
         assertThat(tx.getPointsAffected()).isEqualTo(-80);
 
         // Verify balance updated: 100 - 80 = 20
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
+        ArgumentCaptor<BoardUser> userCaptor = ArgumentCaptor.forClass(BoardUser.class);
+        verify(boardUserRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue().getPointsBalance()).isEqualTo(20);
     }
 
@@ -129,6 +149,8 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
+
 
         Task task = Task.builder()
                 .id(taskId)
@@ -142,18 +164,26 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Entertainment")
+                .boardId(boardId)
+                .build();
+
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         assertThatThrownBy(() -> service.executeTask(taskId, userId))
                 .isInstanceOf(MosifyException.class)
@@ -163,6 +193,7 @@ public class TaskExecutionServiceTest {
 
         verify(transactionRepository, never()).save(any());
         verify(userRepository, never()).save(any());
+        verify(boardUserRepository, never()).save(any());
     }
 
     @Test
@@ -170,6 +201,7 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
 
         Task task = Task.builder()
                 .id(taskId)
@@ -183,19 +215,27 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(0)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Studies")
+                .boardId(boardId)
+                .build();
+
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         service.executeTask(taskId, userId);
 
@@ -232,6 +272,7 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
 
         Task task = Task.builder()
                 .id(taskId)
@@ -246,13 +287,20 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Studies")
+                .boardId(boardId)
+                .build();
+
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
@@ -265,8 +313,8 @@ public class TaskExecutionServiceTest {
                 .pointsAffected(50)
                 .createdAt(LocalDateTime.now())
                 .build();
-        when(transactionRepository.findAllByTaskIdAndUserId(taskId, userId))
-                .thenReturn(List.of(transaction));
+        when(transactionRepository.findAllByTaskIdAndUserId(taskId, userId)).thenReturn(List.of(transaction));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
 
         assertThatThrownBy(() -> service.executeTask(taskId, userId))
                 .isInstanceOf(MosifyException.class)
@@ -282,6 +330,7 @@ public class TaskExecutionServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
+        UUID boardId = UUID.randomUUID();
 
         Task task = Task.builder()
                 .id(taskId)
@@ -296,19 +345,28 @@ public class TaskExecutionServiceTest {
         User user = User.builder()
                 .id(userId)
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         Category category = Category.builder()
                 .id(categoryId)
                 .userId(userId)
                 .name("Studies")
+                .boardId(boardId)
+                .build();
+
+        BoardUser boardUser = BoardUser.builder()
+                .boardId(boardId)
+                .userId(userId)
+                .alias("Alias")
+                .pointsBalance(100)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId,userId)).thenReturn(Optional.of(boardUser));
+
 
         // Execute first time
         Transaction tx1 = service.executeTask(taskId, userId);

@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface TaskJpaRepository extends JpaRepository<TaskEntity, UUID> {
     void deleteAllByCategoryId(UUID categoryId);
     void deleteAllByCategoryIdIn(List<UUID> categoryIds);
+    List<TaskEntity> findAllByCategoryIdIn(List<UUID> categoryIds);
 }

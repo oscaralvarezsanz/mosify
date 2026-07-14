@@ -17,7 +17,6 @@ public class UserEntityConverterTest {
         UserEntity entity = UserEntity.builder()
                 .id(id)
                 .name("Oscar")
-                .pointsBalance(150)
                 .build();
 
         User domain = converter.toDomain(entity);
@@ -25,7 +24,6 @@ public class UserEntityConverterTest {
         assertThat(domain).isNotNull();
         assertThat(domain.getId()).isEqualTo(id);
         assertThat(domain.getName()).isEqualTo("Oscar");
-        assertThat(domain.getPointsBalance()).isEqualTo(150);
     }
 
     @Test
@@ -34,7 +32,6 @@ public class UserEntityConverterTest {
         User domain = User.builder()
                 .id(id)
                 .name("Oscar")
-                .pointsBalance(150)
                 .build();
 
         UserEntity entity = converter.toEntity(domain);
@@ -42,6 +39,5 @@ public class UserEntityConverterTest {
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(id);
         assertThat(entity.getName()).isEqualTo("Oscar");
-        assertThat(entity.getPointsBalance()).isEqualTo(150);
     }
 }

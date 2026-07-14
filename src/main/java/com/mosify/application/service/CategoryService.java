@@ -4,6 +4,7 @@ import com.mosify.application.port.in.category.CategoryCreatePort;
 import com.mosify.application.port.in.category.CategoryDeletePort;
 import com.mosify.application.port.in.category.CategoryGetAllPort;
 import com.mosify.application.port.in.category.CategoryGetByIdPort;
+import com.mosify.application.port.out.board.BoardRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
 import com.mosify.application.port.out.user.UserRepository;
@@ -19,21 +20,21 @@ import java.util.UUID;
 public class CategoryService implements CategoryCreatePort, CategoryGetByIdPort, CategoryGetAllPort, CategoryDeletePort {
 
     private final CategoryRepository categoryRepository;
-    private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
     private final TaskRepository taskRepository;
 
     public CategoryService(CategoryRepository categoryRepository, 
-                           UserRepository userRepository, 
+                           BoardRepository boardRepository,
                            TaskRepository taskRepository) {
         this.categoryRepository = categoryRepository;
-        this.userRepository = userRepository;
+        this.boardRepository = boardRepository;
         this.taskRepository = taskRepository;
     }
 
     @Override
     public Category createCategory(Category category) {
-        if (category.getUserId() == null || !userRepository.findById(category.getUserId()).isPresent()) {
-            throw new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User owner not found with id: " + category.getUserId());
+        if (category.getBoardId() == null || boardRepository.findById(category.getBoardId()).isEmpty()) {
+            throw new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Board not found with id: " + category.getBoardId());
         }
         return categoryRepository.save(category);
     }

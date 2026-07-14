@@ -15,4 +15,6 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionEntit
     @Modifying
     @Query("UPDATE TransactionEntity t SET t.taskId = null WHERE t.taskId = :taskId")
     void setTaskIdToNull(@Param("taskId") UUID taskId);
+
+    List<TransactionEntity> findAllByUserIdIn(List<UUID> userIds);
 }

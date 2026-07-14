@@ -10,4 +10,5 @@ public interface TransactionRepository {
     List<Transaction> findAllByTaskIdAndUserId(UUID taskId, UUID userId);
     void deleteAllByUserId(UUID userId);
     void setTaskIdToNull(UUID taskId);
+    List<Transaction> findAllByUserIdIn(List<UUID> userIds);
 }

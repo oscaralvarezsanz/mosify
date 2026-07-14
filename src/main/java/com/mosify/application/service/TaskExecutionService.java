@@ -1,6 +1,7 @@
 package com.mosify.application.service;
 
 import com.mosify.application.port.in.task.TaskExecutePort;
+import com.mosify.application.port.out.board.BoardUserRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
 import com.mosify.application.port.out.transaction.TransactionRepository;
@@ -21,15 +22,18 @@ public class TaskExecutionService implements TaskExecutePort {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final BoardUserRepository boardUserRepository;
 
     public TaskExecutionService(TaskRepository taskRepository,
                                 UserRepository userRepository,
                                 CategoryRepository categoryRepository,
-                                TransactionRepository transactionRepository) {
+                                TransactionRepository transactionRepository,
+                                BoardUserRepository boardUserRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.transactionRepository = transactionRepository;
+        this.boardUserRepository = boardUserRepository;
     }
 
     @Override
@@ -43,21 +47,20 @@ public class TaskExecutionService implements TaskExecutePort {
             throw new MosifyException(ErrorCode.TASK_INACTIVE, "Task is inactive: " + taskId);
         }
 
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User not found with id: " + userId));
 
         Category category = categoryRepository.findById(task.getCategoryId())
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category not found with id: " + task.getCategoryId()));
 
-        if (!category.getUserId().equals(userId)) {
-            throw new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category does not belong to the user: " + userId);
-        }
+        BoardUser boardUser = boardUserRepository.findByBoardIdAndUserId(category.getBoardId(), userId)
+                .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User is not a member of the board: " + category.getBoardId()));
 
         verifyTaskRecurrency(taskId, userId, task);
 
         if (task.getPointsValue() < 0) {
-            if (user.getPointsBalance() + task.getPointsValue() < 0) {
-                throw new MosifyException(ErrorCode.INSUFFICIENT_BALANCE, "User has insufficient points balance: " + user.getPointsBalance());
+            if (boardUser.getPointsBalance() + task.getPointsValue() < 0) {
+                throw new MosifyException(ErrorCode.INSUFFICIENT_BALANCE, "User has insufficient points balance in this board: " + boardUser.getPointsBalance());
             }
         }
 
@@ -69,7 +72,7 @@ public class TaskExecutionService implements TaskExecutePort {
                 .build();
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        updateUserBalance(task, user);
+        updateBoardUserBalance(task, boardUser);
 
         if (task.getType() == TaskType.SINGLE_USE) {
             taskRepository.save(task.toBuilder().active(false).build());
@@ -78,9 +81,9 @@ public class TaskExecutionService implements TaskExecutePort {
         return savedTransaction;
     }
 
-    private void updateUserBalance(Task task, User user) {
-        int newBalance = user.getPointsBalance() + task.getPointsValue();
-        userRepository.save(user.toBuilder().pointsBalance(newBalance).build());
+    private void updateBoardUserBalance(Task task, BoardUser boardUser) {
+        int newBalance = boardUser.getPointsBalance() + task.getPointsValue();
+        boardUserRepository.save(boardUser.toBuilder().pointsBalance(newBalance).build());
     }
 
     private void verifyTaskRecurrency(UUID taskId, UUID userId, Task task) {

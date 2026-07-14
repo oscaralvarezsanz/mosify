@@ -48,4 +48,16 @@ public class CategoryPersistenceAdapter implements CategoryRepository {
     public void deleteAllByUserId(UUID userId) {
         jpaRepository.deleteAllByUserId(userId);
     }
+
+    @Override
+    public void deleteAllByBoardId(UUID boardId) {
+        jpaRepository.deleteAllByBoardId(boardId);
+    }
+
+    @Override
+    public List<Category> findAllByBoardId(UUID boardId) {
+        return jpaRepository.findAllByBoardId(boardId).stream()
+                .map(entityConverter::toDomain)
+                .toList();
+    }
 }

@@ -4,6 +4,7 @@ import com.mosify.application.port.in.user.UserCreatePort;
 import com.mosify.application.port.in.user.UserDeletePort;
 import com.mosify.application.port.in.user.UserGetAllPort;
 import com.mosify.application.port.in.user.UserGetByIdPort;
+import com.mosify.application.port.out.board.BoardUserRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
 import com.mosify.application.port.out.transaction.TransactionRepository;
@@ -24,22 +25,23 @@ public class UserService implements UserCreatePort, UserGetByIdPort, UserGetAllP
     private final CategoryRepository categoryRepository;
     private final TaskRepository taskRepository;
     private final TransactionRepository transactionRepository;
+    private final BoardUserRepository boardUserRepository;
 
     public UserService(UserRepository userRepository,
                        CategoryRepository categoryRepository,
                        TaskRepository taskRepository,
-                       TransactionRepository transactionRepository) {
+                       TransactionRepository transactionRepository,
+                       BoardUserRepository boardUserRepository) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.taskRepository = taskRepository;
         this.transactionRepository = transactionRepository;
+        this.boardUserRepository = boardUserRepository;
     }
 
     @Override
     public User createUser(User user) {
-        Integer points = user.getPointsBalance() != null ? user.getPointsBalance() : 0;
-        User userToSave = user.toBuilder().pointsBalance(points).build();
-        return userRepository.save(userToSave);
+        return userRepository.save(user);
     }
 
     @Override
@@ -56,28 +58,11 @@ public class UserService implements UserCreatePort, UserGetByIdPort, UserGetAllP
     @Override
     @Transactional
     public void deleteUser(UUID id) {
-        // Verify user exists
         userRepository.findById(id)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User not found with id: " + id));
 
-        // Get all categories of this user
-        List<Category> userCategories = categoryRepository.findAll().stream()
-                .filter(c -> c.getUserId().equals(id))
-                .toList();
-
-        // Delete tasks in those categories
-        if (!userCategories.isEmpty()) {
-            List<UUID> categoryIds = userCategories.stream().map(Category::getId).toList();
-            taskRepository.deleteAllByCategoryIdIn(categoryIds);
-        }
-
-        // Delete categories
-        categoryRepository.deleteAllByUserId(id);
-
-        // Delete transactions
         transactionRepository.deleteAllByUserId(id);
-
-        // Delete user
+        boardUserRepository.deleteAllByUserId(id);
         userRepository.deleteById(id);
     }
 }

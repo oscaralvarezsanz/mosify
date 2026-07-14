@@ -12,4 +12,5 @@ public interface TaskRepository {
     void deleteById(UUID id);
     void deleteAllByCategoryId(UUID categoryId);
     void deleteAllByCategoryIdIn(List<UUID> categoryIds);
+    List<Task> findAllByCategoryIdIn(List<UUID> categoryIds);
 }

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Value
 @Builder(toBuilder = true)
-public class User {
+public class Board {
     UUID id;
     String name;
 }

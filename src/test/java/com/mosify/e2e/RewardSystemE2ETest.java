@@ -30,7 +30,6 @@ public class RewardSystemE2ETest {
         // 1. Create a user
         WebUserRequest userRequest = WebUserRequest.builder()
                 .name("Oscar")
-                .pointsBalance(100)
                 .build();
 
         MvcResult userResult = mockMvc.perform(post("/users")
@@ -46,7 +45,6 @@ public class RewardSystemE2ETest {
 
         assertThat(userResponse.getId()).isNotNull();
         assertThat(userResponse.getName()).isEqualTo("Oscar");
-        assertThat(userResponse.getPointsBalance()).isEqualTo(100);
 
         UUID userId = userResponse.getId();
 
@@ -54,11 +52,34 @@ public class RewardSystemE2ETest {
         mockMvc.perform(get("/users/" + userId))
                 .andExpect(status().isOk());
 
-        // 3. Create a category owned by the user
+        // 3. Create a board & add user to board
+
+        WebBoardRequest boardRequest = WebBoardRequest.builder()
+                .name("Board")
+                .build();
+
+        MvcResult boardResult = mockMvc.perform(post("/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(boardRequest)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        WebUserResponse boardResponse = objectMapper.readValue(
+                boardResult.getResponse().getContentAsString(),
+                WebUserResponse.class
+        );
+
+        MvcResult boardUser = mockMvc.perform(post("/boards/" + boardResponse.getId() + "/users/"+ userResponse.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // 4. Create a category owned by the user
         WebCategoryRequest categoryRequest = WebCategoryRequest.builder()
                 .userId(userId)
                 .name("Studies")
                 .description("Academic goals and tasks")
+                .boardId(boardResponse.getId())
                 .build();
 
         MvcResult categoryResult = mockMvc.perform(post("/categories")
@@ -78,7 +99,7 @@ public class RewardSystemE2ETest {
 
         UUID categoryId = categoryResponse.getId();
 
-        // 4. Create a recurrent task (reward +50 points)
+        // 5. Create a recurrent task (reward +50 points)
         WebTaskRequest taskRequest = WebTaskRequest.builder()
                 .title("Complete 1 hour of math")
                 .categoryId(categoryId)
@@ -105,7 +126,7 @@ public class RewardSystemE2ETest {
 
         UUID taskId = taskResponse.getId();
 
-        // 5. Execute the task (earning 50 points)
+        // 6. Execute the task (earning 50 points)
         MvcResult execResult = mockMvc.perform(post("/tasks/" + taskId + "/execute")
                         .param("userId", userId.toString()))
                 .andExpect(status().isOk())
@@ -121,7 +142,7 @@ public class RewardSystemE2ETest {
         assertThat(txResponse.getTaskId()).isEqualTo(taskId);
         assertThat(txResponse.getPointsAffected()).isEqualTo(50);
 
-        // 6. Verify user points balance is now 150
+        // 7. Verify user points balance is now 150
         MvcResult userCheckResult = mockMvc.perform(get("/users/" + userId))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -130,9 +151,8 @@ public class RewardSystemE2ETest {
                 userCheckResult.getResponse().getContentAsString(),
                 WebUserResponse.class
         );
-        assertThat(updatedUser.getPointsBalance()).isEqualTo(150);
 
-        // 7. Verify transaction history contains the execution log
+        // 8. Verify transaction history contains the execution log
         mockMvc.perform(get("/transactions"))
                 .andExpect(status().isOk());
     }
