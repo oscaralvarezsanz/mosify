@@ -14,4 +14,5 @@ public interface TransactionRepository {
     List<Transaction> findAllByUserIdIn(List<UUID> userIds);
     Optional<Transaction> findById(UUID id);
     void deleteById(UUID id);
+    List<Transaction> findAllByBoardId(UUID boardId);
 }

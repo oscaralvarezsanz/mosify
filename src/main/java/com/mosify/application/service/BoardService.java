@@ -170,12 +170,6 @@ public class BoardService implements
     @Override
     public List<Transaction> getBoardTransactions(UUID boardId, UUID userId) {
         checkMembership(boardId, userId);
-
-        List<BoardUser> memberships = boardUserRepository.findAllByBoardId(boardId);
-        if (memberships.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<UUID> userIds = memberships.stream().map(BoardUser::getUserId).toList();
-        return transactionRepository.findAllByUserIdIn(userIds);
+        return transactionRepository.findAllByBoardId(boardId);
     }
 }

@@ -68,4 +68,11 @@ public class TransactionPersistenceAdapter implements TransactionRepository {
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public List<Transaction> findAllByBoardId(UUID boardId) {
+        return jpaRepository.findAllByBoardId(boardId).stream()
+                .map(entityConverter::toDomain)
+                .toList();
+    }
 }

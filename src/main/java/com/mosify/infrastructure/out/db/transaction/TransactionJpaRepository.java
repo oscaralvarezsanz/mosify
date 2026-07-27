@@ -17,4 +17,7 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionEntit
     void setTaskIdToNull(@Param("taskId") UUID taskId);
 
     List<TransactionEntity> findAllByUserIdIn(List<UUID> userIds);
+
+    @Query("SELECT t FROM TransactionEntity t WHERE t.taskId IN (SELECT tk.id FROM TaskEntity tk WHERE tk.categoryId IN (SELECT c.id FROM CategoryEntity c WHERE c.boardId = :boardId))")
+    List<TransactionEntity> findAllByBoardId(@Param("boardId") UUID boardId);
 }
