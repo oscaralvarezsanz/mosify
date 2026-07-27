@@ -6,6 +6,7 @@ import com.mosify.infrastructure.out.db.transaction.mapper.TransactionEntityConv
 import com.mosify.infrastructure.out.db.model.TransactionEntity;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -55,5 +56,16 @@ public class TransactionPersistenceAdapter implements TransactionRepository {
         return jpaRepository.findAllByUserIdIn(userIds).stream()
                 .map(entityConverter::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Transaction> findById(UUID id) {
+        return jpaRepository.findById(id)
+                .map(entityConverter::toDomain);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
     }
 }

@@ -481,6 +481,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TransactionResponse'
+  /transactions/{id}:
+    delete:
+      summary: Undo a transaction by ID
+      operationId: undoTransaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Transaction undone successfully
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /auth/login:
     post:
       summary: Authenticate user and return JWT token

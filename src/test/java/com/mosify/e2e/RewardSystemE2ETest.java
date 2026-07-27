@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -185,5 +186,18 @@ public class RewardSystemE2ETest {
         mockMvc.perform(get("/transactions")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+
+        // 9. Undo the transaction (should deduct 50 points)
+        mockMvc.perform(delete("/transactions/" + txResponse.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        // 10. Verify transaction history no longer contains the transaction
+        MvcResult historyResult = mockMvc.perform(get("/transactions")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String history = historyResult.getResponse().getContentAsString();
+        assertThat(history).doesNotContain(txResponse.getId().toString());
     }
 }
