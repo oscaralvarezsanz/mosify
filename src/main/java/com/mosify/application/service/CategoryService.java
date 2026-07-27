@@ -4,6 +4,7 @@ import com.mosify.application.port.in.category.CategoryCreatePort;
 import com.mosify.application.port.in.category.CategoryDeletePort;
 import com.mosify.application.port.in.category.CategoryGetAllPort;
 import com.mosify.application.port.in.category.CategoryGetByIdPort;
+import com.mosify.application.port.in.category.CategoryUpdatePort;
 import com.mosify.application.port.out.board.BoardRepository;
 import com.mosify.application.port.out.board.BoardUserRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class CategoryService implements CategoryCreatePort, CategoryGetByIdPort, CategoryGetAllPort, CategoryDeletePort {
+public class CategoryService implements CategoryCreatePort, CategoryGetByIdPort, CategoryGetAllPort, CategoryDeletePort, CategoryUpdatePort {
 
     private final CategoryRepository categoryRepository;
     private final BoardRepository boardRepository;
@@ -82,5 +83,19 @@ public class CategoryService implements CategoryCreatePort, CategoryGetByIdPort,
 
         taskRepository.deleteAllByCategoryId(id);
         categoryRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Category updateCategory(UUID id, Category category, UUID userId) {
+        Category existing = categoryRepository.findById(id)
+                .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category not found with id: " + id));
+        checkMembership(existing.getBoardId(), userId);
+
+        Category updated = existing.toBuilder()
+                .name(category.getName())
+                .description(category.getDescription())
+                .build();
+        return categoryRepository.save(updated);
     }
 }

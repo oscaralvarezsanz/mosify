@@ -4,6 +4,7 @@ import com.mosify.application.port.in.task.TaskCreatePort;
 import com.mosify.application.port.in.task.TaskDeletePort;
 import com.mosify.application.port.in.task.TaskGetAllPort;
 import com.mosify.application.port.in.task.TaskGetByIdPort;
+import com.mosify.application.port.in.task.TaskUpdatePort;
 import com.mosify.application.port.out.board.BoardUserRepository;
 import com.mosify.application.port.out.category.CategoryRepository;
 import com.mosify.application.port.out.task.TaskRepository;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllPort, TaskDeletePort {
+public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllPort, TaskDeletePort, TaskUpdatePort {
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
@@ -94,5 +95,25 @@ public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllP
 
         transactionRepository.setTaskIdToNull(id);
         taskRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Task updateTask(UUID id, Task task, UUID userId) {
+        Task existing = taskRepository.findById(id)
+                .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Task not found with id: " + id));
+        Category category = categoryRepository.findById(existing.getCategoryId())
+                .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category not found with id: " + existing.getCategoryId()));
+        checkMembership(category.getBoardId(), userId);
+
+        Boolean isActive = task.getActive() != null ? task.getActive() : true;
+        Task updated = existing.toBuilder()
+                .title(task.getTitle())
+                .type(task.getType())
+                .frequency(task.getFrequency())
+                .pointsValue(task.getPointsValue())
+                .active(isActive)
+                .build();
+        return taskRepository.save(updated);
     }
 }

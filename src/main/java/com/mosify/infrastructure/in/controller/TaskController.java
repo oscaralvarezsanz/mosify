@@ -8,6 +8,7 @@ import com.mosify.application.port.in.task.TaskDeletePort;
 import com.mosify.application.port.in.task.TaskExecutePort;
 import com.mosify.application.port.in.task.TaskGetAllPort;
 import com.mosify.application.port.in.task.TaskGetByIdPort;
+import com.mosify.application.port.in.task.TaskUpdatePort;
 import com.mosify.domain.model.Task;
 import com.mosify.domain.model.Transaction;
 import com.mosify.infrastructure.in.mapper.TaskWebConverter;
@@ -29,6 +30,7 @@ public class TaskController {
     private final TaskGetAllPort taskGetAllPort;
     private final TaskExecutePort taskExecutePort;
     private final TaskDeletePort taskDeletePort;
+    private final TaskUpdatePort taskUpdatePort;
     private final TaskWebConverter taskWebConverter;
     private final TransactionWebConverter transactionWebConverter;
 
@@ -37,6 +39,7 @@ public class TaskController {
                           TaskGetAllPort taskGetAllPort,
                           TaskExecutePort taskExecutePort,
                           TaskDeletePort taskDeletePort,
+                          TaskUpdatePort taskUpdatePort,
                           TaskWebConverter taskWebConverter,
                           TransactionWebConverter transactionWebConverter) {
         this.taskCreatePort = taskCreatePort;
@@ -44,6 +47,7 @@ public class TaskController {
         this.taskGetAllPort = taskGetAllPort;
         this.taskExecutePort = taskExecutePort;
         this.taskDeletePort = taskDeletePort;
+        this.taskUpdatePort = taskUpdatePort;
         this.taskWebConverter = taskWebConverter;
         this.transactionWebConverter = transactionWebConverter;
     }
@@ -109,5 +113,19 @@ public class TaskController {
         UUID userId = securityUser.getUser().getId();
         taskDeletePort.deleteTask(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<WebTaskResponse> updateTask(
+            @PathVariable UUID id,
+            @RequestBody WebTaskRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        Task task = taskWebConverter.toDomain(request);
+        Task updated = taskUpdatePort.updateTask(id, task, userId);
+        return ResponseEntity.ok(taskWebConverter.toWebResponse(updated));
     }
 }

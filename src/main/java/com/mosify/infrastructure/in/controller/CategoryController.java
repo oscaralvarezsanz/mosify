@@ -6,6 +6,7 @@ import com.mosify.application.port.in.category.CategoryCreatePort;
 import com.mosify.application.port.in.category.CategoryDeletePort;
 import com.mosify.application.port.in.category.CategoryGetAllPort;
 import com.mosify.application.port.in.category.CategoryGetByIdPort;
+import com.mosify.application.port.in.category.CategoryUpdatePort;
 import com.mosify.domain.model.Category;
 import com.mosify.infrastructure.in.mapper.CategoryWebConverter;
 import com.mosify.infrastructure.security.SecurityUser;
@@ -24,17 +25,20 @@ public class CategoryController {
     private final CategoryGetByIdPort categoryGetByIdPort;
     private final CategoryGetAllPort categoryGetAllPort;
     private final CategoryDeletePort categoryDeletePort;
+    private final CategoryUpdatePort categoryUpdatePort;
     private final CategoryWebConverter webConverter;
 
     public CategoryController(CategoryCreatePort categoryCreatePort,
                               CategoryGetByIdPort categoryGetByIdPort,
                               CategoryGetAllPort categoryGetAllPort,
                               CategoryDeletePort categoryDeletePort,
+                              CategoryUpdatePort categoryUpdatePort,
                               CategoryWebConverter webConverter) {
         this.categoryCreatePort = categoryCreatePort;
         this.categoryGetByIdPort = categoryGetByIdPort;
         this.categoryGetAllPort = categoryGetAllPort;
         this.categoryDeletePort = categoryDeletePort;
+        this.categoryUpdatePort = categoryUpdatePort;
         this.webConverter = webConverter;
     }
 
@@ -86,5 +90,19 @@ public class CategoryController {
         UUID userId = securityUser.getUser().getId();
         categoryDeletePort.deleteCategory(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<WebCategoryResponse> updateCategory(
+            @PathVariable UUID id,
+            @RequestBody WebCategoryRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser) {
+        if (securityUser == null || securityUser.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = securityUser.getUser().getId();
+        Category category = webConverter.toDomain(request);
+        Category updated = categoryUpdatePort.updateCategory(id, category, userId);
+        return ResponseEntity.ok(webConverter.toWebResponse(updated));
     }
 }
