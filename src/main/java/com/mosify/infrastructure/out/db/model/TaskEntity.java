@@ -38,4 +38,7 @@ public class TaskEntity {
 
     @Column(nullable = false)
     private Boolean active;
+
+    @Column(name = "assigned_user_id")
+    private UUID assignedUserId;
 }

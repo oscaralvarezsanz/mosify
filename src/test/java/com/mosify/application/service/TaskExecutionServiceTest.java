@@ -241,4 +241,49 @@ public class TaskExecutionServiceTest {
 
         verify(transactionRepository, times(2)).save(any(Transaction.class));
     }
+
+    @Test
+    public void shouldExecuteAssignedTaskSuccessfully() {
+        Task task = Task.builder()
+                .id(taskId)
+                .title("Math Exercises")
+                .categoryId(categoryId)
+                .type(TaskType.RECURRENT)
+                .pointsValue(50)
+                .active(true)
+                .assignedUserId(userId)
+                .build();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+
+        Transaction tx = service.executeTask(taskId, userId, userId);
+
+        assertThat(tx).isNotNull();
+        assertThat(tx.getPointsAffected()).isEqualTo(50);
+        verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
+    public void shouldFailToExecuteTaskWhenAssignedToAnotherUser() {
+        UUID differentUserId = UUID.randomUUID();
+        Task task = Task.builder()
+                .id(taskId)
+                .title("Math Exercises")
+                .categoryId(categoryId)
+                .type(TaskType.RECURRENT)
+                .pointsValue(50)
+                .active(true)
+                .assignedUserId(differentUserId)
+                .build();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+
+        assertThatThrownBy(() -> service.executeTask(taskId, userId, userId))
+                .isInstanceOf(MosifyException.class)
+                .hasMessageContaining("Access denied. Task is assigned to user")
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(transactionRepository, never()).save(any());
+    }
 }

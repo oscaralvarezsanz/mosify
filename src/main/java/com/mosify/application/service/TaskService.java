@@ -113,6 +113,7 @@ public class TaskService implements TaskCreatePort, TaskGetByIdPort, TaskGetAllP
                 .frequency(task.getFrequency())
                 .pointsValue(task.getPointsValue())
                 .active(isActive)
+                .assignedUserId(task.getAssignedUserId())
                 .build();
         return taskRepository.save(updated);
     }

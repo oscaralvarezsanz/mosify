@@ -67,17 +67,47 @@ public class TaskServiceTest {
     }
 
     @Test
+    public void shouldCreateTaskSuccessfullyWithAssignedUserId() {
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(boardUserRepository.findAllByBoardId(boardId)).thenReturn(List.of(boardUser));
+        when(boardUserRepository.findByBoardIdAndUserId(boardId, userId)).thenReturn(Optional.of(boardUser));
+
+        UUID assignedUserId = UUID.randomUUID();
+        Task createRequest = Task.builder()
+                .title("New Task")
+                .categoryId(categoryId)
+                .type(TaskType.SINGLE_USE)
+                .pointsValue(30)
+                .assignedUserId(assignedUserId)
+                .build();
+
+        Task expectedSaved = createRequest.toBuilder().active(true).build();
+        when(taskRepository.save(any(Task.class))).thenReturn(expectedSaved);
+
+        Task result = service.createTask(createRequest, userId);
+
+        assertThat(result.getTitle()).isEqualTo("New Task");
+        assertThat(result.getAssignedUserId()).isEqualTo(assignedUserId);
+        verify(taskRepository).save(argThat(tk ->
+                tk.getTitle().equals("New Task") &&
+                assignedUserId.equals(tk.getAssignedUserId())
+        ));
+    }
+
+    @Test
     public void shouldUpdateTaskSuccessfullyWhenMember() {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(boardUserRepository.findAllByBoardId(boardId)).thenReturn(List.of(boardUser));
         when(boardUserRepository.findByBoardIdAndUserId(boardId, userId)).thenReturn(Optional.of(boardUser));
 
+        UUID assignedUserId = UUID.randomUUID();
         Task updateRequest = Task.builder()
                 .title("New Title")
                 .type(TaskType.SINGLE_USE)
                 .pointsValue(20)
                 .active(false)
+                .assignedUserId(assignedUserId)
                 .build();
 
         Task expectedSaved = task.toBuilder()
@@ -85,6 +115,7 @@ public class TaskServiceTest {
                 .type(TaskType.SINGLE_USE)
                 .pointsValue(20)
                 .active(false)
+                .assignedUserId(assignedUserId)
                 .build();
         when(taskRepository.save(any(Task.class))).thenReturn(expectedSaved);
 
@@ -94,12 +125,14 @@ public class TaskServiceTest {
         assertThat(result.getType()).isEqualTo(TaskType.SINGLE_USE);
         assertThat(result.getPointsValue()).isEqualTo(20);
         assertThat(result.getActive()).isFalse();
+        assertThat(result.getAssignedUserId()).isEqualTo(assignedUserId);
 
         verify(taskRepository).save(argThat(tk -> 
                 tk.getTitle().equals("New Title") &&
                 tk.getType() == TaskType.SINGLE_USE &&
                 tk.getPointsValue() == 20 &&
-                !tk.getActive()
+                !tk.getActive() &&
+                assignedUserId.equals(tk.getAssignedUserId())
         ));
     }
 

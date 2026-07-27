@@ -683,6 +683,10 @@ components:
         active:
           type: boolean
           example: true
+        assignedUserId:
+          type: string
+          format: uuid
+          nullable: true
     TaskResponse:
       type: object
       required:
@@ -712,6 +716,10 @@ components:
           type: integer
         active:
           type: boolean
+        assignedUserId:
+          type: string
+          format: uuid
+          nullable: true
     TransactionResponse:
       type: object
       required:

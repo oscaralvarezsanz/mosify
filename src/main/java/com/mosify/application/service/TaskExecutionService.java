@@ -47,13 +47,16 @@ public class TaskExecutionService implements TaskExecutePort {
             throw new MosifyException(ErrorCode.TASK_INACTIVE, "Task is inactive: " + taskId);
         }
 
+        if (task.getAssignedUserId() != null && !task.getAssignedUserId().equals(userId)) {
+            throw new MosifyException(ErrorCode.FORBIDDEN, "Access denied. Task is assigned to user: " + task.getAssignedUserId());
+        }
+
         userRepository.findById(userId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "User not found with id: " + userId));
 
         Category category = categoryRepository.findById(task.getCategoryId())
                 .orElseThrow(() -> new MosifyException(ErrorCode.RESOURCE_NOT_FOUND, "Category not found with id: " + task.getCategoryId()));
 
-        // Check if caller is member of board
         boardUserRepository.findByBoardIdAndUserId(category.getBoardId(), callerUserId)
                 .orElseThrow(() -> new MosifyException(ErrorCode.FORBIDDEN, "Access denied. Caller is not a member of this board."));
 

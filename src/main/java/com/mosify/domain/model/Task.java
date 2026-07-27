@@ -14,4 +14,5 @@ public class Task {
     TaskFrequency frequency;
     Integer pointsValue;
     Boolean active;
+    UUID assignedUserId;
 }
